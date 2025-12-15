@@ -54,6 +54,9 @@ public class OrderProcessingApp {
     private static OrderRequest createOrderForScenario(String scenario) {
         List<OrderLine> items = new ArrayList<>();
         
+        // Note: Switch cases intentionally use string literals (not VALID_SCENARIOS)
+        // because Java switch requires compile-time constants. Validation occurs
+        // in parseArgs() before reaching this method.
         switch (scenario.toLowerCase()) {
             case "in-stock" -> {
                 items.add(new OrderLine("SKU-123", 2));  // 10 available
