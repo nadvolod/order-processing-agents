@@ -29,7 +29,7 @@ public class FakePaymentService implements PaymentService {
         if (shouldFail) {
             return new PaymentResult(false, null, "Payment declined (simulated)");
         } else {
-            String txId = "TX-" + Math.abs(random.nextInt(TX_ID_BOUND));
+            String txId = "TX-" + random.nextInt(TX_ID_BOUND);
             return new PaymentResult(true, txId, "Payment successful");
         }
     }

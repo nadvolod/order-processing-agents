@@ -29,7 +29,7 @@ public class FakeShippingService implements ShippingService {
         if (shouldFail) {
             return new ShipmentDetails(false, null, "Shipping unavailable (simulated)");
         } else {
-            String trackingNum = "TRACK-" + Math.abs(random.nextInt(TRACKING_NUM_BOUND));
+            String trackingNum = "TRACK-" + random.nextInt(TRACKING_NUM_BOUND);
             return new ShipmentDetails(true, trackingNum, "Shipment created");
         }
     }
