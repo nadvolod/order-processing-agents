@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a progressive demo of an order-processing system built in Java 25. The project demonstrates evolving from a naive in-process workflow to a sophisticated system with AI agents and Temporal workflows.
+This is a progressive demo of an order-processing system built in Java 24. The project demonstrates evolving from a naive in-process workflow to a sophisticated system with AI agents and Temporal workflows.
 
 **Current State**: Naive, synchronous order processing without Temporal, HTTP APIs, or retries. This is intentional to highlight problems that Temporal will later solve.
 
