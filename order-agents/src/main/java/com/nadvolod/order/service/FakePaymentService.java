@@ -5,6 +5,8 @@ import com.nadvolod.order.domain.PaymentResult;
 import java.util.Random;
 
 public class FakePaymentService implements PaymentService {
+    private static final int TX_ID_BOUND = 100000;
+    
     private final double failRate;
     private final Random random;
 
@@ -27,7 +29,7 @@ public class FakePaymentService implements PaymentService {
         if (shouldFail) {
             return new PaymentResult(false, null, "Payment declined (simulated)");
         } else {
-            String txId = "TX-" + Math.abs(random.nextInt(100000));
+            String txId = "TX-" + Math.abs(random.nextInt(TX_ID_BOUND));
             return new PaymentResult(true, txId, "Payment successful");
         }
     }

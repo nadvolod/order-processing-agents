@@ -5,6 +5,8 @@ import com.nadvolod.order.domain.ShipmentDetails;
 import java.util.Random;
 
 public class FakeShippingService implements ShippingService {
+    private static final int TRACKING_NUM_BOUND = 100000;
+    
     private final double failRate;
     private final Random random;
 
@@ -27,7 +29,7 @@ public class FakeShippingService implements ShippingService {
         if (shouldFail) {
             return new ShipmentDetails(false, null, "Shipping unavailable (simulated)");
         } else {
-            String trackingNum = "TRACK-" + Math.abs(random.nextInt(100000));
+            String trackingNum = "TRACK-" + Math.abs(random.nextInt(TRACKING_NUM_BOUND));
             return new ShipmentDetails(true, trackingNum, "Shipment created");
         }
     }

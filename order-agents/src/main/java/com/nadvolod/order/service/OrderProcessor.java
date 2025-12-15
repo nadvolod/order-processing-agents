@@ -10,6 +10,8 @@ import java.util.List;
  * This will later map to a Temporal Workflow.
  */
 public class OrderProcessor {
+    private static final double PRICE_PER_ITEM = 10.0;
+    
     private final InventoryService inventoryService;
     private final PaymentService paymentService;
     private final ShippingService shippingService;
@@ -46,9 +48,8 @@ public class OrderProcessor {
         System.out.println("STEP 1 Inventory: OK");
         
         // STEP 2: Process payment
-        // Simple calculation: assume $10 per item
         double amount = request.items().stream()
-            .mapToDouble(item -> item.quantity() * 10.0)
+            .mapToDouble(item -> item.quantity() * PRICE_PER_ITEM)
             .sum();
         
         PaymentResult paymentResult = paymentService.processPayment(request.orderId(), amount);
