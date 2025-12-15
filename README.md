@@ -18,8 +18,7 @@ This repository showcases the evolution of an order processing system:
 ```
 order-processing-agents/
 ├── order-agents/          # Main Java application directory
-│   ├── CLAUDE.md         # Detailed development guide
-│   └── README.md         # Application-specific documentation
+│   └── CLAUDE.md         # Detailed development guide
 └── README.md             # This file
 ```
 
@@ -90,6 +89,15 @@ Each step can fail and will halt the entire workflow. This fragility is intentio
 - `OrderLineStatus` - per-SKU inventory results
 - `PaymentResult` / `ShipmentDetails` - step-specific outcomes
 
+### Partial Response Pattern
+
+`OrderResponse` uses nullable fields to show workflow progress:
+- `lineStatuses` - always populated
+- `paymentResult` - null if inventory failed
+- `shipmentDetails` - null if inventory or payment failed
+
+This makes it easy to see exactly where the workflow stopped.
+
 ### Scenario-Driven Testing
 
 The application provides three hardcoded scenarios using in-memory inventory data:
@@ -118,16 +126,22 @@ These are teaching points, not bugs:
 
 These limitations will be addressed when migrating to Temporal workflows.
 
-## Development Guidelines
+## What NOT to Add
 
-When making changes, avoid "fixing" the naive implementation unless explicitly requested:
-- Do not add retry logic
-- Do not add state persistence
-- Do not add transaction handling
-- Do not add HTTP endpoints (unless part of planned evolution)
-- Do not add complex error handling
+⚠️ **Important**: Do not "fix" the naive implementation unless explicitly requested:
+- ❌ No retry logic
+- ❌ No state persistence
+- ❌ No transaction handling
+- ❌ No HTTP endpoints (unless part of planned evolution)
+- ❌ No complex error handling
 
-The goal is to keep this simple and fragile as a baseline before introducing Temporal.
+Keep it simple and fragile as a baseline before introducing Temporal.
+
+## Future Roadmap
+
+1. **Phase 2**: Add AI agents for decision support and customer communication
+2. **Phase 3**: Migrate to Temporal workflows for durability and retries
+3. **Phase 4**: Add HTTP API layer (optional)
 
 ## Documentation
 
