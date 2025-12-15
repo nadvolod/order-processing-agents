@@ -50,7 +50,7 @@ java -cp target/order-processing-agents-0.1.0-SNAPSHOT.jar com.nadvolod.order.Or
 
 The system implements a naive three-step orchestration pattern in `OrderProcessor`:
 
-```
+```text
 OrderRequest → Inventory Check → Payment Processing → Shipment Creation → OrderResponse
 ```
 
