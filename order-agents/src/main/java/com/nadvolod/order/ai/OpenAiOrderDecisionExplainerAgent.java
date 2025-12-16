@@ -38,37 +38,44 @@ public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExp
             ChatCompletion completion = client.chat().completions().create(params);
             String jsonText = completion.choices().get(0).message().content().orElse("");
 
+            // Strip markdown code blocks if present (```json ... ```)
+            jsonText = jsonText.trim();
+            if (jsonText.startsWith("```")) {
+                int start = jsonText.indexOf('\n') + 1;
+                int end = jsonText.lastIndexOf("```");
+                if (end > start) {
+                    jsonText = jsonText.substring(start, end).trim();
+                }
+            }
+
             // Parse the model's JSON output into AgentAdvice
             JsonNode parsed = om.readTree(jsonText);
             String summary = parsed.get("summary").asText();
             var actions = new ArrayList<String>();
             parsed.get("recommendedActions").forEach(n -> actions.add(n.asText()));
-            String customerMessage = parsed.get("customerMessage").asText();
 
-            return new AgentAdvice(summary, actions, customerMessage);
+            return new AgentAdvice(summary, actions);
 
         } catch (Exception e) {
             // Fail closed: don't break the workflow. Return a safe fallback.
             return new AgentAdvice(
                     "AI agent failed: " + e.getMessage(),
-                    java.util.List.of("Retry later", "Contact support"),
-                    "Thanks for your order. We're having trouble generating details right now, but we'll follow up shortly."
+                    java.util.List.of("Retry later", "Contact support")
             );
         }
     }
 
     private String buildPrompt(OrderRequest req, OrderResponse resp) {
         return """
-        You are a customer-focused order support assistant for an e-commerce store.
+        You are an internal Order Decision Explainer for an e-commerce system.
 
-        Explain what happened with the order and suggest next actions.
-        Be specific. Be brief. No jargon.
+        Analyze what happened during order processing and provide internal notes for engineers.
+        Be specific. Be technical. This is for internal use only.
 
         Return your response as valid JSON with this exact structure:
         {
-          "summary": "brief summary of what happened",
-          "recommendedActions": ["action 1", "action 2"],
-          "customerMessage": "friendly message for the customer"
+          "summary": "brief technical summary of what happened",
+          "recommendedActions": ["action 1", "action 2"]
         }
 
         OrderRequest:
