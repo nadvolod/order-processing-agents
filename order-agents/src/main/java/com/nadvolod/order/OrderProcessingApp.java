@@ -1,7 +1,10 @@
 package com.nadvolod.order;
 
-import com.nadvolod.order.ai.StubOrderDecisionExplainerAgent;
-import com.nadvolod.order.domain.*;
+import com.nadvolod.order.ai.OpenAiOrderDecisionExplainerAgent;
+import com.nadvolod.order.domain.AgentAdvice;
+import com.nadvolod.order.domain.OrderLine;
+import com.nadvolod.order.domain.OrderRequest;
+import com.nadvolod.order.domain.OrderResponse;
 import com.nadvolod.order.service.*;
 
 import java.util.ArrayList;
@@ -45,8 +48,15 @@ public class OrderProcessingApp {
         // Process order
         OrderResponse response = processor.processOrder(request);
 
-        var agent = new StubOrderDecisionExplainerAgent();
-        var advice = agent.explain(request, response);
+        var apiKey = System.getenv("OPENAI_API_KEY");
+        var agent = new OpenAiOrderDecisionExplainerAgent(apiKey, "gpt-5-nano");
+        AgentAdvice advice = agent.explain(request, response);
+
+        System.out.println("\nAI Agent Output:");
+        System.out.println(advice.summary());
+        System.out.println(advice.recommendedActions());
+        System.out.println(advice.customerMessage());
+
         
         System.out.println("\n=== Order Complete ===");
         System.out.println("Final Status: " + response.status());
