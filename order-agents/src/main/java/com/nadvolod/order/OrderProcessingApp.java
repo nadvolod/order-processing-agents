@@ -1,5 +1,6 @@
 package com.nadvolod.order;
 
+import com.nadvolod.order.ai.StubOrderDecisionExplainerAgent;
 import com.nadvolod.order.domain.*;
 import com.nadvolod.order.service.*;
 
@@ -43,6 +44,9 @@ public class OrderProcessingApp {
         
         // Process order
         OrderResponse response = processor.processOrder(request);
+
+        var agent = new StubOrderDecisionExplainerAgent();
+        var advice = agent.explain(request, response);
         
         System.out.println("\n=== Order Complete ===");
         System.out.println("Final Status: " + response.status());
