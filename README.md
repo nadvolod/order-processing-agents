@@ -41,6 +41,10 @@ mvn clean package
 The application accepts a single CLI argument to control execution paths:
 
 **Mixed scenario** (default - one item in stock, one out of stock):
+
+If one of the items is out of stock, the workflow stops while we resolve the issue. Then we need to re-run the workflow
+after the item is back in stock.
+
 ```bash
 mvn -q exec:java -Dexec.mainClass="com.nadvolod.order.OrderProcessingApp" -Dexec.args="mixed"
 ```
