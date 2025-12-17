@@ -52,6 +52,9 @@ public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExp
             if (actionsNode == null) {
                 throw new IllegalArgumentException("Malformed JSON: missing 'recommendedActions' field");
             }
+            if (!actionsNode.isArray()) {
+                throw new IllegalArgumentException("Malformed JSON: 'recommendedActions' must be an array");
+            }
             var actions = new ArrayList<String>();
             actionsNode.forEach(n -> actions.add(n.asText()));
             
