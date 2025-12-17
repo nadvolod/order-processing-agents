@@ -53,7 +53,7 @@ public class OrderProcessingApp {
         AgentAdvice advice = agent.explain(request, response);
 
         System.out.println("\nAI Agent Output:");
-        System.out.println(advice.summary());
+        System.out.println(advice.summary() != null ? advice.summary() : "");
         System.out.println(advice.recommendedActions());
         System.out.println(advice.customerMessage());
 
