@@ -6,7 +6,6 @@ import com.nadvolod.order.domain.AgentAdvice;
 import com.nadvolod.order.domain.OrderRequest;
 import com.nadvolod.order.domain.OrderResponse;
 import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 
@@ -18,10 +17,8 @@ public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExp
     private final ObjectMapper om = new ObjectMapper();
     private final String model;
 
-    public OpenAiOrderDecisionExplainerAgent(String apiKey, String model) {
-        this.client = OpenAIOkHttpClient.builder()
-                .apiKey(apiKey)
-                .build();
+    public OpenAiOrderDecisionExplainerAgent(OpenAIClient client, String model) {
+        this.client = client;
         this.model = model;
     }
 

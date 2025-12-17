@@ -1,5 +1,6 @@
 package com.nadvolod.order;
 
+import com.nadvolod.order.ai.OpenAiClientFactory;
 import com.nadvolod.order.ai.OpenAiOrderDecisionExplainerAgent;
 import com.nadvolod.order.domain.AgentAdvice;
 import com.nadvolod.order.domain.OrderLine;
@@ -48,8 +49,8 @@ public class OrderProcessingApp {
         // Process order
         OrderResponse response = processor.processOrder(request);
 
-        var apiKey = System.getenv("OPENAI_API_KEY");
-        var agent = new OpenAiOrderDecisionExplainerAgent(apiKey, "gpt-5-nano");
+        var client = OpenAiClientFactory.create();
+        var agent = new OpenAiOrderDecisionExplainerAgent(client, "gpt-5-nano");
         AgentAdvice advice = agent.explain(request, response);
 
         System.out.println("\nAI Agent Output:");
