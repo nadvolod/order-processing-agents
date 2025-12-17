@@ -25,6 +25,11 @@
             <artifactId>openai-java</artifactId>
             <version>4.11.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.temporal</groupId>
+            <artifactId>temporal-sdk</artifactId>
+            <version>1.24.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -43,9 +48,26 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
-                <configuration>
-                    <mainClass>com.nadvolod.order.OrderProcessingApp</mainClass>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>app</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.OrderProcessingApp</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>worker</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.temporal.WorkerApp</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>workflow</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.temporal.StartWorkflowApp</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

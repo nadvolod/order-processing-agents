@@ -38,6 +38,8 @@ mvn clean package
 
 ### Run Scenarios
 
+#### Without Temporal
+
 The application accepts a single CLI argument to control execution paths:
 
 **Mixed scenario** (default - one item in stock, one out of stock):
@@ -65,6 +67,39 @@ mvn exec:java -Dexec.args="out-of-stock"
 ```bash
 java -cp target/order-processing-agents-0.1.0-SNAPSHOT.jar com.nadvolod.order.OrderProcessingApp in-stock
 ```
+
+#### With Temporal
+
+```bash
+# Terminal 1: Start Temporal Worker
+mvn exec:java@worker
+```
+
+```bash
+# Terminal 2: Start Temporal Workflow (in a new terminal)
+mvn exec:java@workflow
+```
+
+There's also the option to use Temporal CLI (but it's more complicated)
+
+```bash
+  temporal workflow start \
+    --task-queue order-fulfillment \
+    --type OrderFulfillmentWorkflow \
+    --workflow-id order-cli-test \
+    --input '{"orderId":"order-123","items":[{"sku":"sku-123","quantity":1}]}'
+```
+
+```bash
+  # Check workflow status
+  temporal workflow describe --workflow-id order-cli-test
+
+  # View workflow execution history
+  temporal workflow show --workflow-id order-cli-test
+
+```
+
+
 
 ## Architecture Overview
 
