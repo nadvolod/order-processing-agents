@@ -11,7 +11,6 @@ public class StubOrderDecisionExplainerAgent implements OrderDecisionExplainerAg
     public AgentAdvice explain(OrderRequest request, OrderResponse response) {
         return new AgentAdvice(
                 "Stub AI: explanation not enabled yet.",
-                List.of("No recommended actions (stub)."),
-                "Thanks for your order. We’ll update you shortly.");
+                List.of("No recommended actions (stub)."));
     }
 }
