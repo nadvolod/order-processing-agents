@@ -5,14 +5,16 @@ import com.openai.client.OpenAIClient;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 
+import java.util.Objects;
+
 public final class OpenAiCustomerMessageAgent implements CustomerMessageAgent {
 
     private final OpenAIClient client;
     private final String model;
 
     public OpenAiCustomerMessageAgent(OpenAIClient client, String model) {
-        this.client = client;
-        this.model = model;
+        this.client = Objects.requireNonNull(client, "client must not be null");
+        this.model = Objects.requireNonNull(model, "model must not be null");
     }
 
     @Override
