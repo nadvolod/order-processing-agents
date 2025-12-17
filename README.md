@@ -45,7 +45,7 @@ The application accepts a single CLI argument to control execution paths:
 If one of the items is out of stock, the workflow stops while we resolve the issue. Then we need to re-run the workflow
 after the item is back in stock.
 
-```bash 
+```bash
   # Mixed scenario
   mvn exec:java -Dexec.args="mixed"
 ```
@@ -58,7 +58,8 @@ after the item is back in stock.
 
 **Out of stock**:
 ```bash
-mvn exec:java -Dexec.args="out-of-stock"
+  # Out-of-stock scenario
+  mvn exec:java -Dexec.args="out-of-stock"
 ```
 
 **Run with Java directly**:
