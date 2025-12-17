@@ -57,8 +57,8 @@ public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExp
             String fallbackSummary = "AI agent failed: " + errorMessage;
             
             log.warn("Fallback triggered in OpenAiOrderDecisionExplainerAgent.explain(). " +
-                    "Reason: {}. Returning safe fallback with summary: '{}'", 
-                    errorMessage, fallbackSummary, e);
+                    "Returning safe fallback with summary: '{}'. Reason: {}", 
+                    fallbackSummary, e.getClass().getSimpleName() + ": " + errorMessage);
             
             return new AgentAdvice(
                     fallbackSummary,
