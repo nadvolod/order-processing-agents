@@ -54,14 +54,10 @@ public final class OpenAiCustomerMessageAgent implements CustomerMessageAgent {
 
     private String safeFallback(AgentAdvice advice, String reason) {
         // Context-aware fallback based on summary content
-        String summaryLower = advice.summary().toLowerCase();
-
-        if (summaryLower.contains("accept") || summaryLower.contains("success")) {
-            return "Thank you for your order! We're processing it and will send updates soon.";
-        } else if (summaryLower.contains("reject") || summaryLower.contains("fail")) {
-            return "We're unable to complete your order at this time. Please contact support for assistance.";
-        } else {
-            return "We're reviewing your order. You'll receive an update shortly.";
-        }
+        return switch (CustomerMessageUtils.determineMessageType(advice)) {
+            case SUCCESS -> "Thank you for your order! We're processing it and will send updates soon.";
+            case FAILURE -> "We're unable to complete your order at this time. Please contact support for assistance.";
+            case NEUTRAL -> "We're reviewing your order. You'll receive an update shortly.";
+        };
     }
 }
