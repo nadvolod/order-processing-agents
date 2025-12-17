@@ -40,10 +40,26 @@ public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExp
 
             // Parse the model's JSON output into AgentAdvice
             JsonNode parsed = om.readTree(jsonText);
-            String summary = parsed.get("summary").asText();
+            
+            // Validate JSON structure with null safety checks
+            JsonNode summaryNode = parsed.get("summary");
+            if (summaryNode == null) {
+                throw new IllegalArgumentException("Malformed JSON: missing 'summary' field");
+            }
+            String summary = summaryNode.asText();
+            
+            JsonNode actionsNode = parsed.get("recommendedActions");
+            if (actionsNode == null) {
+                throw new IllegalArgumentException("Malformed JSON: missing 'recommendedActions' field");
+            }
             var actions = new ArrayList<String>();
-            parsed.get("recommendedActions").forEach(n -> actions.add(n.asText()));
-            String customerMessage = parsed.get("customerMessage").asText();
+            actionsNode.forEach(n -> actions.add(n.asText()));
+            
+            JsonNode customerMessageNode = parsed.get("customerMessage");
+            if (customerMessageNode == null) {
+                throw new IllegalArgumentException("Malformed JSON: missing 'customerMessage' field");
+            }
+            String customerMessage = customerMessageNode.asText();
 
             return new AgentAdvice(summary, actions, customerMessage);
 
