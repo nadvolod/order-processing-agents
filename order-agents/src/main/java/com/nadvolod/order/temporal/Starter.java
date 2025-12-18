@@ -9,7 +9,7 @@ import io.temporal.serviceclient.WorkflowServiceStubs;
 
 import java.util.List;
 
-public final class StartWorkflowApp {
+public final class Starter {
     public static void main(String[] args) {
         WorkflowServiceStubs service = WorkflowServiceStubs.newLocalServiceStubs();
         WorkflowClient client = WorkflowClient.newInstance(service);

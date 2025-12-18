@@ -64,7 +64,7 @@
                     <execution>
                         <id>workflow</id>
                         <configuration>
-                            <mainClass>com.nadvolod.order.temporal.StartWorkflowApp</mainClass>
+                            <mainClass>com.nadvolod.order.temporal.Starter</mainClass>
                         </configuration>
                     </execution>
                 </executions>
