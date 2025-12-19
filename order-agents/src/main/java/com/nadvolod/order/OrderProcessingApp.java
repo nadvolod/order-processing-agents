@@ -1,5 +1,7 @@
 package com.nadvolod.order;
 
+import com.nadvolod.order.ai.OpenAiClientFactory;
+import com.nadvolod.order.ai.OpenAiCustomerMessageAgent;
 import com.nadvolod.order.ai.OpenAiOrderDecisionExplainerAgent;
 import com.nadvolod.order.domain.AgentAdvice;
 import com.nadvolod.order.domain.OrderLine;
@@ -48,14 +50,26 @@ public class OrderProcessingApp {
         // Process order
         OrderResponse response = processor.processOrder(request);
 
+        // Initialize both agents
         var apiKey = System.getenv("OPENAI_API_KEY");
-        var agent = new OpenAiOrderDecisionExplainerAgent(apiKey, "gpt-5-nano");
-        AgentAdvice advice = agent.explain(request, response);
+        var explainerAgent = new OpenAiOrderDecisionExplainerAgent(apiKey, "gpt-4o-mini");
+        var messageAgent = new OpenAiCustomerMessageAgent(
+                OpenAiClientFactory.create(),
+                "gpt-4o-mini"
+        );
 
-        System.out.println("\nAI Agent Output:");
-        System.out.println(advice.summary() != null ? advice.summary() : "");
-        System.out.println(advice.recommendedActions());
-        System.out.println(advice.customerMessage());
+        // Chain the agents: OrderResponse -> AgentAdvice -> Customer Message
+        AgentAdvice advice = explainerAgent.explain(request, response);
+        String customerMessage = messageAgent.generateMessage(advice);
+
+        // Display internal analysis
+        System.out.println("\n=== AI Agent Analysis ===");
+        System.out.println("Internal Summary: " + advice.summary());
+        System.out.println("Internal Actions: " + advice.recommendedActions());
+
+        // Display customer message
+        System.out.println("\n=== Customer Message ===");
+        System.out.println(customerMessage);
 
         
         System.out.println("\n=== Order Complete ===");
