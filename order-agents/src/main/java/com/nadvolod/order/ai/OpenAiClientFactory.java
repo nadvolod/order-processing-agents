@@ -10,7 +10,7 @@ public final class OpenAiClientFactory {
     public static OpenAIClient create() {
         String apiKey = System.getenv("OPENAI_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("OPENAI_API_KEY not set");
+            throw new IllegalStateException("OPENAI_API_KEY environment variable not set. Please set it with your OpenAI API key.");
         }
         return OpenAIOkHttpClient.builder()
                 .apiKey(apiKey)

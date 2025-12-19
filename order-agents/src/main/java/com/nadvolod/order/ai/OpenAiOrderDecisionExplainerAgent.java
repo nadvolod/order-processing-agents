@@ -9,10 +9,14 @@ import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
 public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExplainerAgent {
+
+    private static final Logger log = LoggerFactory.getLogger(OpenAiOrderDecisionExplainerAgent.class);
 
     private final OpenAIClient client;
     private final ObjectMapper om = new ObjectMapper();
@@ -58,6 +62,13 @@ public final class OpenAiOrderDecisionExplainerAgent implements OrderDecisionExp
 
         } catch (Exception e) {
             // Fail closed: don't break the workflow. Return a safe fallback.
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            String fallbackSummary = "AI agent failed: " + errorMessage;
+            
+            log.warn("Fallback triggered in OpenAiOrderDecisionExplainerAgent.explain(). " +
+                    "Returning safe fallback with summary: '{}'. Reason: {}", 
+                    fallbackSummary, e.getClass().getSimpleName() + ": " + errorMessage);
+            
             return new AgentAdvice(
                     "AI agent failed: " + e.getMessage(),
                     java.util.List.of("Retry later", "Contact support")

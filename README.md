@@ -330,6 +330,101 @@ Temporal handles:
 
 ## Architecture Overview
 
+### Event Flow Diagram
+
+The following diagram illustrates the complete order processing workflow with all events and decision points:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              Order Processing Workflow                          │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                                  ┌─────────────┐
+                                  │ CLI Command │
+                                  │  (Scenario) │
+                                  └──────┬──────┘
+                                         │
+                                         ▼
+                              ┌────────────────────┐
+                              │  OrderRequest      │
+                              │  - orderId         │
+                              │  - items[]         │
+                              │    (SKU, quantity) │
+                              └─────────┬──────────┘
+                                        │
+                                        ▼
+                        ┌───────────────────────────────┐
+                        │  STEP 1: Inventory Check      │
+                        │  (InventoryService)           │
+                        │  Check each SKU availability  │
+                        └──────────┬────────────────────┘
+                                   │
+                        ┌──────────┴──────────┐
+                        │                     │
+                   All Available        Any Unavailable
+                        │                     │
+                        ▼                     ▼
+              ┌──────────────────┐   ┌────────────────────┐
+              │ STEP 2: Payment  │   │  Return Response   │
+              │ (PaymentService) │   │  Status: REJECTED  │
+              │ Process $amount  │   │  - lineStatuses    │
+              └────────┬─────────┘   │  - payment: null   │
+                       │             │  - shipment: null  │
+            ┌──────────┴────────┐   └──────────┬─────────┘
+            │                   │               │
+       Success             Random Fail          │
+            │                   │               │
+            ▼                   ▼               │
+   ┌──────────────────┐ ┌────────────────────┐ │
+   │ STEP 3: Shipping │ │  Return Response   │ │
+   │ (ShippingService)│ │  Status: REJECTED  │ │
+   │ Create shipment  │ │  - lineStatuses    │ │
+   └────────┬─────────┘ │  - paymentResult   │ │
+            │           │  - shipment: null  │ │
+  ┌─────────┴─────────┐ └──────────┬─────────┘ │
+  │                   │            │            │
+Success          Random Fail       │            │
+  │                   │            │            │
+  ▼                   ▼            │            │
+┌─────────────┐ ┌─────────────┐   │            │
+│  Response   │ │  Response   │   │            │
+│  ACCEPTED   │ │  REJECTED   │   │            │
+│ All fields  │ │  Partial    │   │            │
+│  populated  │ │   fields    │   │            │
+└──────┬──────┘ └──────┬──────┘   │            │
+       │               │           │            │
+       └───────────────┴───────────┴────────────┘
+                       │
+                       ▼
+            ┌─────────────────────────┐
+            │  AI Agent (OpenAI)      │
+            │  Analyze order outcome  │
+            │  Generate explanation   │
+            └──────────┬──────────────┘
+                       │
+                       ▼
+            ┌─────────────────────────┐
+            │  AgentAdvice            │
+            │  - summary              │
+            │  - recommendedActions[] │
+            │  - customerMessage      │
+            └──────────┬──────────────┘
+                       │
+                       ▼
+            ┌─────────────────────────┐
+            │  Console Output         │
+            │  Display final status   │
+            │  and AI recommendations │
+            └─────────────────────────┘
+
+Legend:
+  ┌─────┐
+  │ Box │  = Processing step or data structure
+  └─────┘
+    ▼     = Flow direction
+  ───┬──  = Decision point (branch)
+```
+
 ### Core Workflow Pattern
 
 The system implements a naive three-step orchestration pattern:

@@ -46,20 +46,8 @@ This project follows a multi-agent architecture where different agents handle sp
 
 ### Project Structure
 
-```
-order-agents/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── orderprocessing/
-│   │   │           ├── agents/
-│   │   │           ├── models/
-│   │   │           └── services/
-│   │   └── resources/
-│   └── test/
-│       └── java/
-└── pom.xml / build.gradle
+```text
+OrderRequest → Inventory Check → Payment Processing → Shipment Creation → OrderResponse
 ```
 
 ### Building from Source
