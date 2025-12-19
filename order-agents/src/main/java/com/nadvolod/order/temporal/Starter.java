@@ -2,7 +2,7 @@ package com.nadvolod.order.temporal;
 
 import com.nadvolod.order.domain.OrderLine;
 import com.nadvolod.order.domain.OrderRequest;
-import com.nadvolod.order.domain.OrderResponse;
+import com.nadvolod.order.domain.WorkflowResult;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
@@ -23,9 +23,12 @@ public final class Starter {
 
         OrderRequest request = new OrderRequest("order-123", List.of(new OrderLine("sku-123", 1)));
 
-        OrderResponse response = workflow.processOrder(request);
+        System.out.println("\n=== Starting Workflow ===");
+        System.out.println("Order ID: " + request.orderId());
+        System.out.println("Items: " + request.items());
 
-        System.out.println("workflow result:");
-        System.out.println(response);
+        WorkflowResult result = workflow.processOrder(request);
+
+        System.out.println(result);
     }
 }

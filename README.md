@@ -99,6 +99,9 @@ There's also the option to use Temporal CLI (but it's more complicated)
 
 ```
 
+## Understand Temporal Value
+
+
 
 
 ## Architecture Overview
@@ -138,6 +141,14 @@ Each step can fail and will halt the entire workflow. This fragility is intentio
 - `shipmentDetails` - null if inventory or payment failed
 
 This makes it easy to see exactly where the workflow stopped.
+
+### Important Notes
+
+When adding new code to the workflows:
+1. Stop the worker
+2. `mvn clean compile`
+3. Restart the worker
+4. Run the workflow
 
 ### Scenario-Driven Testing
 

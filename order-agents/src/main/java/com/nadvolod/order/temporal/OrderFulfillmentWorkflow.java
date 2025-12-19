@@ -1,12 +1,12 @@
 package com.nadvolod.order.temporal;
 
 import com.nadvolod.order.domain.OrderRequest;
-import com.nadvolod.order.domain.OrderResponse;
+import com.nadvolod.order.domain.WorkflowResult;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 
 @WorkflowInterface
 public interface OrderFulfillmentWorkflow {
     @WorkflowMethod
-    OrderResponse processOrder(OrderRequest request);
+    WorkflowResult processOrder(OrderRequest request);
 }
