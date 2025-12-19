@@ -12,6 +12,7 @@ import com.nadvolod.order.service.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * CLI-based order processing demo.
@@ -24,6 +25,8 @@ import java.util.Random;
  *   mixed       - Mix of available and unavailable items
  */
 public class OrderProcessingApp {
+    
+    private static final Set<String> VALID_SCENARIOS = Set.of("in-stock", "out-of-stock", "mixed");
     
     public static void main(String[] args) {
         // Parse CLI arguments
@@ -79,6 +82,9 @@ public class OrderProcessingApp {
     private static OrderRequest createOrderForScenario(String scenario) {
         List<OrderLine> items = new ArrayList<>();
         
+        // Note: Switch cases intentionally use string literals (not VALID_SCENARIOS)
+        // because Java switch requires compile-time constants. Validation occurs
+        // in parseArgs() before reaching this method.
         switch (scenario.toLowerCase()) {
             case "in-stock" -> {
                 items.add(new OrderLine("SKU-123", 2));  // 10 available
@@ -106,8 +112,8 @@ public class OrderProcessingApp {
         String scenario = args[0];
         
         // Validate scenario
-        if (!scenario.equals("in-stock") && !scenario.equals("out-of-stock") && !scenario.equals("mixed")) {
-            System.err.println("Error: Invalid scenario. Must be one of: in-stock, out-of-stock, mixed");
+        if (!VALID_SCENARIOS.contains(scenario)) {
+            System.err.println("Error: Invalid scenario. Must be one of: " + String.join(", ", VALID_SCENARIOS));
             return null;
         }
         
