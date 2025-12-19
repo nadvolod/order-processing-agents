@@ -67,6 +67,12 @@
                             <mainClass>com.nadvolod.order.temporal.Starter</mainClass>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>fraud-app</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.fraud.FraudOrderProcessingApp</mainClass>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
