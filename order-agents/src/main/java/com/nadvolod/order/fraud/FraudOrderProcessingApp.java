@@ -71,6 +71,7 @@ public class FraudOrderProcessingApp {
         );
 
         // Create order request based on scenario
+        // Doesn't need Temporal
         OrderRequest request = createOrderForScenario(config.scenario);
 
         System.out.println("=== Fraud Detection Workflow Demo ===");
