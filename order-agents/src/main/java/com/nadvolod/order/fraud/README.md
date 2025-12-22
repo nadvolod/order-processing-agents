@@ -483,7 +483,7 @@ mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.0 --seed 99"
 - [Temporal Documentation](https://docs.temporal.io/)
 - [OpenAI API Documentation](https://platform.openai.com/docs)
 - [V1 Workflow](../README.md) (for comparison)
-- [Main Project README](../../../../../../../../../CLAUDE.md)
+- [Main Project README](../../../../../../../CLAUDE.md)
 
 ## Questions?
 
