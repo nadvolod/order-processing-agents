@@ -29,8 +29,17 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
 
     @Override
     public FraudOrderResponse processOrder(OrderRequest order) {
-        // 1. Detect fraud
+        System.out.println("\n=== Processing Fraud Detection Order: " + order.orderId() + " ===\n");
+
+        // STEP 1: AI Fraud Detection
+        System.out.println("STEP 1: AI Fraud Detection");
         FraudDetectionResult fraudCheck = fraudDetectionActivity.detectFraud(order);
+
+        System.out.println("  Risk Score: " + fraudCheck.riskScore());
+        System.out.println("  Risk Level: " + fraudCheck.riskLevel());
+        System.out.println("  Decision: " + (fraudCheck.approved() ? "APPROVED" : "REJECTED"));
+        System.out.println("  Reason: " + fraudCheck.reason());
+
         if (!fraudCheck.approved()) {
             System.out.println("\nRESULT: REJECTED_FRAUD");
             System.out.println("Order rejected due to fraud detection.\n");
@@ -55,7 +64,9 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
             );
         }
 
-        //2. PAYMENT
+        System.out.println("STEP 1: ✓ PASSED\n");
+
+        // STEP 2: Charge Payment Card
         System.out.println("STEP 2: Charge Payment Card");
         double totalAmount = order.items().stream()
                 .mapToDouble(item -> item.quantity() * PRICE_PER_ITEM)
@@ -95,7 +106,11 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
             );
         }
 
-        // STEP 3: Confirmation
+        System.out.println("STEP 2: ✓ PASSED\n");
+
+        // STEP 3: Generate Confirmation Message
+        System.out.println("STEP 3: Generate Confirmation Message");
+
         // Build the response so far
         FraudOrderResponse partialResponse = new FraudOrderResponse(
                 order.orderId(),
@@ -106,6 +121,13 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
         );
 
         ConfirmationMessage confirmation = confirmationMessageActivity.generateMessage(partialResponse);
+
+        System.out.println("  Subject: " + confirmation.subject());
+        System.out.println("  Tone: " + confirmation.tone());
+        System.out.println("  Body: " + confirmation.body());
+        System.out.println("STEP 3: ✓ PASSED\n");
+
+        System.out.println("RESULT: APPROVED\n");
 
         // Return complete response
         return new FraudOrderResponse(

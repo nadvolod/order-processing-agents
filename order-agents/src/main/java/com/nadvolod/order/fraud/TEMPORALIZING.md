@@ -469,6 +469,44 @@ The worker is a process that:
 4. Executes work when it arrives
 5. Runs forever (until you stop it)
 
+**🏪 Restaurant Analogy:**
+
+Think of the Worker as a **restaurant that's open 24/7**:
+- The restaurant **connects to DoorDash** (Temporal Server)
+- It says: **"We can make pizza and burgers!"** (registers workflows and activities)
+- It **waits for orders** to come in
+- When an order arrives, the **kitchen staff does the work** (executes activities)
+- The restaurant **never closes** - it's always ready for the next order!
+
+**Visualization:**
+
+```
+┌───────────────────────────────────────────┐
+│           WORKER PROCESS                  │
+│  ┌─────────────────────────────────────┐  │
+│  │  Workflows Registered:              │  │
+│  │  ✓ FraudOrderWorkflowImpl           │  │
+│  │                                     │  │
+│  │  Activities Registered:             │  │
+│  │  ✓ FraudDetectionActivityImpl       │  │
+│  │  ✓ PaymentChargeActivityImpl        │  │
+│  │  ✓ ConfirmationMessageActivityImpl  │  │
+│  └─────────────────────────────────────┘  │
+│                                           │
+│  Status: 👂 LISTENING on "fraud-order-   │
+│           processing" queue               │
+└───────────────────────────────────────────┘
+                    ↕
+        (polling Temporal Server)
+                    ↕
+┌───────────────────────────────────────────┐
+│         TEMPORAL SERVER                   │
+│   Task Queue: "fraud-order-processing"    │
+└───────────────────────────────────────────┘
+```
+
+**💡 Key Insight:** The Worker is like a **vending machine** - it sits there running, waiting for someone to press a button (trigger a workflow). When a workflow is triggered, it springs into action!
+
 ### The Worker Pattern
 
 Every worker follows this structure:
@@ -716,11 +754,55 @@ To make each workflow execution unique and trackable!
 System.out.println("=== Starting Workflow ===");
 System.out.println("Order: " + request.orderId());
 
-// This is where the magic happens!
+// Step 3: This is where the magic happens!
 FraudOrderResponse response = workflow.____(____)  // What method? What parameter?
 
 System.out.println("=== Workflow Complete ===");
 ```
+
+**🎯 What happens here?**
+
+When you call `workflow.processOrder(request)`, here's the journey:
+
+```
+┌─────────────┐
+│   Starter   │ 1. Sends work to Temporal
+└──────┬──────┘
+       │
+       ↓
+┌─────────────────┐
+│ Temporal Server │ 2. Finds a worker listening on task queue
+└──────┬──────────┘
+       │
+       ↓
+┌─────────────┐
+│   Worker    │ 3. Executes the workflow
+└──────┬──────┘
+       │
+       ├──→ 4a. Executes FraudDetectionActivity
+       ├──→ 4b. Executes PaymentChargeActivity (with retries!)
+       └──→ 4c. Executes ConfirmationMessageActivity
+       │
+       ↓
+┌─────────────┐
+│   Worker    │ 5. Returns the result
+└──────┬──────┘
+       │
+       ↓
+┌─────────────┐
+│   Starter   │ 6. Receives the result and displays it
+└─────────────┘
+```
+
+**Think of it like ordering food delivery:**
+1. **You (Starter)** place an order through an app
+2. **The app (Temporal Server)** finds a restaurant that can make your food
+3. **The restaurant (Worker)** starts cooking
+4. **The kitchen staff (Activities)** do the actual cooking tasks
+5. **The restaurant** packages everything up
+6. **You** receive your delicious food!
+
+**Key insight:** The Starter doesn't do the work itself - it just triggers it and waits for results!
 
 #### Part F: Display Results
 
@@ -732,11 +814,51 @@ Show:
 - Payment details
 - Confirmation message
 
-**Bonus:** Add a link to the Temporal Web UI:
+**Complete Example:**
+
 ```java
-System.out.println("View in Temporal UI:");
+// Step 4: Display results (similar to FraudOrderProcessingApp)
+System.out.println("\n=== Final Results ===");
+System.out.println("Order ID: " + response.orderId());
+System.out.println("Status: " + response.status());
+
+// Add more details based on what's in the response
+if (response.fraudCheck() != null) {
+    System.out.println("\n=== Fraud Check ===");
+    System.out.println("Risk Score: " + response.fraudCheck().riskScore());
+    System.out.println("Risk Level: " + response.fraudCheck().riskLevel());
+    System.out.println("Approved: " + response.fraudCheck().approved());
+    if (!response.fraudCheck().reasons().isEmpty()) {
+        System.out.println("Reasons: " + String.join(", ", response.fraudCheck().reasons()));
+    }
+}
+
+if (response.paymentCharge() != null) {
+    System.out.println("\n=== Payment ===");
+    System.out.println("Success: " + response.paymentCharge().success());
+    System.out.println("Transaction ID: " + response.paymentCharge().transactionId());
+    System.out.println("Amount: $" + response.paymentCharge().amount());
+    if (response.paymentCharge().errorMessage() != null) {
+        System.out.println("Error: " + response.paymentCharge().errorMessage());
+    }
+}
+
+if (response.confirmation() != null) {
+    System.out.println("\n=== Customer Message ===");
+    System.out.println("Subject: " + response.confirmation().subject());
+    System.out.println("Body: " + response.confirmation().body());
+}
+```
+
+**💡 Pro Tip:** Add a link to the Temporal Web UI so you can inspect the workflow execution:
+
+```java
+System.out.println("\n=== Temporal Web UI ===");
+System.out.println("View workflow execution:");
 System.out.println("http://localhost:8233/namespaces/default/workflows/fraud-order-" + request.orderId());
 ```
+
+**Why this is useful:** The Web UI shows you the complete execution history, all activity retries, timing information, and input/output data for each step. It's like having X-ray vision into your workflow!
 
 **✅ Checkpoint:** Starter should compile and be ready to trigger workflows.
 

@@ -84,11 +84,21 @@ public final class OpenAiFraudDetectionAgent implements FraudDetectionAgent {
         return """
         You are a Fraud Detection AI for an e-commerce platform.
 
-        Analyze the following order for fraud indicators:
-        - Unusual quantities
-        - Suspicious patterns
-        - Order ID anomalies
-        - Item combinations
+        Analyze the following order for fraud indicators. ONLY reject orders that show clear signs of fraud:
+
+        RED FLAGS (REJECT):
+        - Order ID contains "FRAUD", "TEST", or other suspicious keywords
+        - Extremely high quantities (100+ items of a single SKU)
+        - Multiple high-value items in unusual combinations that suggest resale
+
+        NORMAL BEHAVIOR (APPROVE with LOW risk):
+        - Small to medium quantities (1-50 items) - this is typical customer behavior
+        - Standard item combinations
+        - Regular order IDs with timestamps
+
+        BORDERLINE (APPROVE with MEDIUM risk):
+        - Moderate quantities (50-100 items) that could be legitimate bulk purchases
+        - Unusual but not impossible item combinations
 
         Return your analysis as valid JSON with this exact structure:
         {
@@ -101,7 +111,7 @@ public final class OpenAiFraudDetectionAgent implements FraudDetectionAgent {
         OrderRequest:
         %s
 
-        Be conservative: when in doubt, approve with MEDIUM risk for manual review.
+        IMPORTANT: Be lenient with normal customer orders. When in doubt, APPROVE with appropriate risk level for manual review rather than rejecting legitimate customers.
         """.formatted(request.toString());
     }
 }

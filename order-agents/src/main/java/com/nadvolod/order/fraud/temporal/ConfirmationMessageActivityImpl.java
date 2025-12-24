@@ -4,11 +4,11 @@ import com.nadvolod.order.fraud.ai.ConfirmationMessageAgent;
 import com.nadvolod.order.fraud.domain.ConfirmationMessage;
 import com.nadvolod.order.fraud.domain.FraudOrderResponse;
 
-public class ConfirmationMessageImpl implements ConfirmationMessageActivity{
+public class ConfirmationMessageActivityImpl implements ConfirmationMessageActivity{
 
     private final ConfirmationMessageAgent messageAgent;
 
-    public ConfirmationMessageImpl(ConfirmationMessageAgent messageAgent){
+    public ConfirmationMessageActivityImpl(ConfirmationMessageAgent messageAgent){
         this.messageAgent = messageAgent;
     }
     @Override

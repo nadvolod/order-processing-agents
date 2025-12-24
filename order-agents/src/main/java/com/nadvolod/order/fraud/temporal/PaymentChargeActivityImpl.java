@@ -3,10 +3,10 @@ package com.nadvolod.order.fraud.temporal;
 import com.nadvolod.order.fraud.domain.PaymentChargeResult;
 import com.nadvolod.order.fraud.service.FraudPaymentService;
 
-public class PaymentChargeImpl implements PaymentChargeActivity{
+public class PaymentChargeActivityImpl implements PaymentChargeActivity{
     private final FraudPaymentService paymentService;
 
-    public PaymentChargeImpl(FraudPaymentService paymentService) {
+    public PaymentChargeActivityImpl(FraudPaymentService paymentService) {
         this.paymentService = paymentService;
     }
 
