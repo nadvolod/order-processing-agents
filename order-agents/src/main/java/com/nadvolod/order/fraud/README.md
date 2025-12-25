@@ -29,7 +29,7 @@ The original v1 workflow (`com.nadvolod.order`) focuses on inventory management 
 ### Running the Workflow
 
 ```bash
-# Basic usage - low-risk order
+# Basic usage - low-risk order (payment always succeeds)
 mvn exec:java@fraud-app -Dexec.args="low-risk"
 
 # High-risk order (large quantities)
@@ -38,8 +38,12 @@ mvn exec:java@fraud-app -Dexec.args="high-risk"
 # Fraud test (intentionally suspicious order ID)
 mvn exec:java@fraud-app -Dexec.args="fraud-test"
 
-# Test payment failures (80% failure rate, seed for determinism)
-mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.8 --seed 42"
+# Test payment failures - flaky payment service (70% failure rate)
+# → Use this to see Temporal's retry benefits!
+mvn exec:java@fraud-app -Dexec.args="payment-flaky"
+
+# Test payment exhaustion - broken payment service (100% failure)
+mvn exec:java@fraud-app -Dexec.args="payment-broken"
 
 # Use stub agents (no OpenAI API required)
 OPENAI_API_KEY= mvn exec:java@fraud-app -Dexec.args="low-risk"
@@ -47,18 +51,15 @@ OPENAI_API_KEY= mvn exec:java@fraud-app -Dexec.args="low-risk"
 
 ### Available Scenarios
 
-| Scenario | Description | Expected Outcome |
-|----------|-------------|------------------|
-| `low-risk` | Normal order (2-3 items) | Should pass fraud check, payment succeeds (if fail rate = 0) |
-| `high-risk` | Large quantity order (50+ items) | May be flagged by AI, or pass with medium risk |
-| `fraud-test` | Order ID contains "FRAUD-TEST-" | Always rejected by fraud detection |
+| Scenario | Description | Payment Behavior | Expected Outcome |
+|----------|-------------|------------------|------------------|
+| `low-risk` | Normal order (2-3 items) | Always succeeds | Should pass fraud check and payment |
+| `high-risk` | Large quantity order (125+ items) | Always succeeds | May be flagged by AI, or pass with medium risk |
+| `fraud-test` | Order ID contains "FRAUD-TEST-" | Always succeeds | Always rejected by fraud detection |
+| `payment-flaky` | Normal order | **70% failure rate** | Demonstrates retry benefits - use this with Temporal! |
+| `payment-broken` | Normal order | **100% failure rate** | Demonstrates retry exhaustion |
 
-### CLI Options
-
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--payment-fail-rate <double>` | Probability of payment failure (0.0-1.0) | `--payment-fail-rate 0.5` |
-| `--seed <long>` | Random seed for deterministic behavior | `--seed 12345` |
+**Note:** The payment scenarios (`payment-flaky` and `payment-broken`) are designed specifically to show the difference between naive implementation (current) and Temporal-based implementation (with automatic retries).
 
 ## Architecture
 
@@ -143,10 +144,10 @@ This makes Temporal's benefits obvious when you add it later!
 
 **FakeCardPaymentService** simulates payment gateway behavior:
 
-- Configurable failure rate (0.0 to 1.0)
+- Scenario-based failure rates (controlled by scenario name)
 - Tracks attempt count (useful for demonstrating Temporal retries)
-- Supports seeded `Random` for deterministic testing
 - Logs each attempt: `[Payment] Attempt #1`
+- Simulates realistic transient failures (network issues, timeouts, etc.)
 
 ## Understanding the Output
 
@@ -240,6 +241,25 @@ If `OPENAI_API_KEY` is not set, the application automatically uses **stub agents
 - Template-based confirmation messages
 - No API calls, no costs, fully deterministic
 
+## Configuring Payment Failure Rate (Temporal Worker)
+
+When running the Temporal worker, you can configure the payment failure rate using an environment variable:
+
+```bash
+# Start worker with 100% failure rate (for testing retry exhaustion)
+PAYMENT_FAILURE_RATE=1.0 mvn clean compile exec:java@fraud-worker
+
+# Start worker with 70% failure rate (default, for testing retries)
+PAYMENT_FAILURE_RATE=0.7 mvn clean compile exec:java@fraud-worker
+
+# Start worker with 0% failure rate (payment always succeeds)
+PAYMENT_FAILURE_RATE=0.0 mvn clean compile exec:java@fraud-worker
+```
+
+**Note**: This only affects the Temporal worker (`fraud-worker`). The non-Temporal version (`fraud-app`) determines the failure rate from the scenario you run (e.g., `payment-flaky` = 70%, `payment-broken` = 100%).
+
+**Default**: If `PAYMENT_FAILURE_RATE` is not set, the worker uses 0.7 (70% failure rate).
+
 ## Learning Path: Adding Temporal
 
 ### Current Limitations (By Design)
@@ -318,24 +338,23 @@ ActivityOptions paymentOptions = ActivityOptions.newBuilder()
 
 **Before Temporal (current implementation):**
 ```bash
-mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.8"
-# Result: Likely fails on first payment attempt
+mvn exec:java@fraud-app -Dexec.args="payment-flaky"
+# Result: Likely fails on first payment attempt (70% failure rate)
 # Output: [Payment] Attempt #1 → FAILED → REJECTED_PAYMENT
 ```
 
 **After Temporal:**
 ```bash
-# Start worker
-mvn exec:java@fraud-worker
+# Start worker with guaranteed failure
+ PAYMENT_FAILURE_RATE=1.0 mvn clean compile exec:java@fraud-worker
 
-# In another terminal, start workflow
-mvn exec:java@fraud-workflow -Dexec.args="low-risk --payment-fail-rate 0.8"
+# In another terminal, start workflow with payment failure
+mvn exec:java@fraud-workflow -Dexec.args="payment-broken"
 # Result: Multiple retries, eventually succeeds!
 # Output:
 #   [Payment] Attempt #1 → FAILED
 #   [Payment] Attempt #2 → FAILED
-#   [Payment] Attempt #3 → FAILED
-#   [Payment] Attempt #4 → SUCCESS → APPROVED
+#   [Payment] Attempt #3 → SUCCESS → APPROVED
 ```
 
 **Additional Benefits:**
@@ -452,12 +471,12 @@ echo $OPENAI_API_KEY  # Should print your key
 
 ### Payment Always Fails
 
-**Problem**: Payment fails every time even with `--payment-fail-rate 0.0`
+**Problem**: Payment fails every time even with `low-risk` scenario
 
-**Solution**: Check the random seed - some seeds may produce unlucky sequences. Try different seeds:
-```bash
-mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.0 --seed 99"
-```
+**Solution**: Make sure you're using the right scenario:
+- `low-risk`, `high-risk`, `fraud-test` → Payment always succeeds
+- `payment-flaky` → 70% failure rate (expected to fail sometimes)
+- `payment-broken` → 100% failure rate (always fails by design)
 
 ## Comparison with V1
 
@@ -472,11 +491,11 @@ mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.0 --seed 99"
 
 ## Next Steps
 
-1. **Run All Scenarios**: Try all three scenarios to understand the workflow
-2. **Test Failure Cases**: Experiment with different `--payment-fail-rate` values
+1. **Run All Scenarios**: Try all five scenarios to understand the workflow
+2. **Test Payment Failures**: Run `payment-flaky` multiple times to see random failures
 3. **Examine the Code**: Read through `FraudOrderProcessor.java` to understand the orchestration
 4. **Add Temporal**: Follow the temporalization roadmap above
-5. **Compare Before/After**: Run the same scenario with and without Temporal to see the benefits
+5. **Compare Before/After**: Run `payment-flaky` with and without Temporal to see the retry benefits
 
 ## Resources
 
@@ -488,9 +507,10 @@ mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.0 --seed 99"
 ## Questions?
 
 This is a learning demo. Feel free to:
-- Modify the failure rates to see different behaviors
+- Run different scenarios to see various behaviors
 - Add logging to understand the flow better
 - Implement your own AI agent variations
 - Experiment with the Temporal integration
+- Try the `payment-flaky` scenario multiple times to see different outcomes
 
 Happy learning!

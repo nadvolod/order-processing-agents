@@ -6,6 +6,7 @@ import com.nadvolod.order.fraud.domain.FraudDetectionResult;
 import com.nadvolod.order.fraud.domain.FraudOrderResponse;
 import com.nadvolod.order.fraud.domain.PaymentChargeResult;
 import io.temporal.activity.ActivityOptions;
+import io.temporal.common.RetryOptions;
 import io.temporal.workflow.Workflow;
 
 import java.time.Duration;
@@ -25,6 +26,12 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
     private final PaymentChargeActivity paymentChargeActivity = Workflow.newActivityStub(PaymentChargeActivity.class,
             ActivityOptions.newBuilder()
                     .setStartToCloseTimeout(Duration.ofSeconds(5))
+                    .setRetryOptions(RetryOptions.newBuilder()
+                            .setMaximumAttempts(5)  // Retry up to 5 times total
+                            .setInitialInterval(Duration.ofSeconds(1))
+                            .setMaximumInterval(Duration.ofSeconds(5))
+                            .setBackoffCoefficient(2.0)  // Exponential backoff: 1s, 2s, 4s, 5s
+                            .build())
                     .build());
 
     @Override
@@ -73,24 +80,40 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
                 .sum();
 
         System.out.println("  Amount: $" + String.format("%.2f", totalAmount));
-        PaymentChargeResult paymentResult = paymentChargeActivity.chargeCard(order.orderId(), totalAmount);
 
-        System.out.println("  Result: " + (paymentResult.success() ? "SUCCESS" : "FAILED"));
-        System.out.println("  Message: " + paymentResult.message());
-        if (paymentResult.chargeId() != null) {
-            System.out.println("  Charge ID: " + paymentResult.chargeId());
-        }
+        PaymentChargeResult paymentResult;
+        try {
+            // This will retry automatically if payment fails (throws PaymentFailedException)
+            paymentResult = paymentChargeActivity.chargeCard(order.orderId(), totalAmount);
 
-        if (!paymentResult.success()) {
+            System.out.println("  Result: SUCCESS");
+            System.out.println("  Message: " + paymentResult.message());
+            if (paymentResult.chargeId() != null) {
+                System.out.println("  Charge ID: " + paymentResult.chargeId());
+            }
+            System.out.println("STEP 2: ✓ PASSED\n");
+
+        } catch (Exception e) {
+            // Retries exhausted - payment failed after all attempts
+            System.out.println("  Result: FAILED");
+            System.out.println("  Message: Payment failed after all retry attempts");
             System.out.println("\nRESULT: REJECTED_PAYMENT");
-            System.out.println("Order rejected due to payment failure.\n");
+            System.out.println("Order rejected due to payment failure after retries.\n");
+
+            // Create a failed payment result for the response
+            PaymentChargeResult failedResult = new PaymentChargeResult(
+                    false,
+                    null,
+                    e.getMessage(),
+                    0.0
+            );
 
             // Build partial response
             FraudOrderResponse partialResponse = new FraudOrderResponse(
                     order.orderId(),
                     "REJECTED_PAYMENT",
                     fraudCheck,
-                    paymentResult,
+                    failedResult,
                     null
             );
 
@@ -101,12 +124,10 @@ public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
                     order.orderId(),
                     "REJECTED_PAYMENT",
                     fraudCheck,
-                    paymentResult,
+                    failedResult,
                     failureMessage
             );
         }
-
-        System.out.println("STEP 2: ✓ PASSED\n");
 
         // STEP 3: Generate Confirmation Message
         System.out.println("STEP 3: Generate Confirmation Message");

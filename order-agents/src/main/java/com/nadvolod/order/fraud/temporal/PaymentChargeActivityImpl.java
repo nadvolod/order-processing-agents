@@ -12,6 +12,17 @@ public class PaymentChargeActivityImpl implements PaymentChargeActivity{
 
     @Override
     public PaymentChargeResult chargeCard(String orderId, double amount) {
-        return paymentService.chargeCard(orderId, amount);
+        PaymentChargeResult result = paymentService.chargeCard(orderId, amount);
+
+        // If payment fails, throw an exception to trigger Temporal retries
+        if (!result.success()) {
+            throw new PaymentFailedException(
+                orderId,
+                1, // Temporal will handle retry count
+                result.message()
+            );
+        }
+
+        return result;
     }
 }

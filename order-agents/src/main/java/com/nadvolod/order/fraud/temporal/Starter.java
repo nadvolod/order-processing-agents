@@ -8,6 +8,7 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 
 import static com.nadvolod.order.fraud.FraudOrderProcessingApp.createOrderForScenario;
+import static com.nadvolod.order.fraud.FraudOrderProcessingApp.getPaymentFailRate;
 
 public class Starter {
 
@@ -42,9 +43,9 @@ public class Starter {
         // Step 3: Start the workflow!
         System.out.println("=== Fraud Detection Workflow Demo (Temporal) ===");
         System.out.println("Scenario: " + config.scenario);
-        System.out.println("Payment Fail Rate: " + (config.paymentFailRate * 100) + "%");
-        if (config.seed != null) {
-            System.out.println("Random Seed: " + config.seed);
+        double failRate = getPaymentFailRate(config.scenario);
+        if (failRate > 0) {
+            System.out.println("Payment Failure Rate: " + (failRate * 100) + "%");
         }
 
         FraudOrderResponse response = workflow.processOrder(request);

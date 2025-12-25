@@ -609,8 +609,8 @@ if (apiKey != null && !apiKey.isBlank()) {
     confirmationAgent = new ____();
 }
 
-// Create payment service
-FraudPaymentService paymentService = new FakeCardPaymentService(0.0, new Random());
+// Create payment service with 70% failure rate for demonstrating retries
+FraudPaymentService paymentService = new FakeCardPaymentService(0.7);
 ```
 
 #### Part F: Create Activity Implementations
@@ -703,17 +703,17 @@ private static final String TASK_QUEUE = "____";  // Same as Worker!
 
 #### Part B: Parse CLI Arguments
 
-**Strategy:** Copy the argument parsing from `FraudOrderProcessingApp.java`
+**Strategy:** Use the existing CLI parsing from `CLI.java`
 
-You need to support:
-- Scenario: `low-risk`, `high-risk`, `fraud-test`
-- `--payment-fail-rate <rate>`
-- `--seed <long>`
+You need to support scenarios:
+- `low-risk`, `high-risk`, `fraud-test` (payment always succeeds)
+- `payment-flaky` (70% failure - demonstrates retries!)
+- `payment-broken` (100% failure - demonstrates exhaustion)
 
-**Hint:** Copy these methods from FraudOrderProcessingApp:
-- `parseArgs(String[] args)`
-- `createOrderForScenario(String scenario)`
-- `printUsage()`
+**Hint:** Import and use:
+- `CLI.parseArgs(args)` for parsing
+- `FraudOrderProcessingApp.createOrderForScenario(config.scenario)` for creating orders
+- `CLI.printUsage()` for help text
 
 #### Part C: Connect to Temporal
 
@@ -962,7 +962,7 @@ Now test the **real value** of Temporal: automatic retries!
 ### Test 1: WITHOUT Temporal (Fails Immediately)
 
 ```bash
-mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.8 --seed 42"
+mvn exec:java@fraud-app -Dexec.args="payment-flaky"
 ```
 
 **Result:**
@@ -971,23 +971,26 @@ mvn exec:java@fraud-app -Dexec.args="low-risk --payment-fail-rate 0.8 --seed 42"
 REJECTED_PAYMENT
 ```
 
-Only 1 attempt! Workflow dies immediately.
+Only 1 attempt! Workflow dies immediately (70% chance of failure).
+
+**Note:** The `payment-flaky` scenario has a 70% failure rate - you may need to run it multiple times to see a failure.
 
 ### Test 2: WITH Temporal (Automatic Retries!)
 
 ```bash
-mvn exec:java@fraud-workflow -Dexec.args="low-risk --payment-fail-rate 0.8 --seed 42"
+mvn exec:java@fraud-workflow -Dexec.args="payment-flaky"
 ```
 
 **Watch Terminal 2 (worker)!** You'll see:
 ```
 [Payment] Attempt #1 - FAILED
 [Payment] Attempt #2 - FAILED
-[Payment] Attempt #3 - FAILED
-[Payment] Attempt #4 - SUCCESS!
+[Payment] Attempt #3 - SUCCESS!
 ```
 
 **Result:** APPROVED! Temporal kept retrying until it succeeded!
+
+**Note:** With 70% failure rate and 5 retry attempts, success is highly likely!
 
 ### View Retries in Web UI
 
@@ -1067,24 +1070,24 @@ Try more aggressive retries:
 .setInitialInterval(Duration.ofMillis(500))  // Start faster
 ```
 
-### 2. Test Different Failure Rates
+### 2. Test Different Failure Scenarios
 
 ```bash
-# 50% failure
-mvn exec:java@fraud-workflow -Dexec.args="low-risk --payment-fail-rate 0.5"
+# Normal order - payment always succeeds
+mvn exec:java@fraud-workflow -Dexec.args="low-risk"
 
-# 90% failure (many retries!)
-mvn exec:java@fraud-workflow -Dexec.args="low-risk --payment-fail-rate 0.9"
+# Flaky payment - 70% failure rate (demonstrates retries)
+mvn exec:java@fraud-workflow -Dexec.args="payment-flaky"
 
-# 100% failure (exhausts retries)
-mvn exec:java@fraud-workflow -Dexec.args="low-risk --payment-fail-rate 1.0"
+# Broken payment - 100% failure (exhausts retries)
+mvn exec:java@fraud-workflow -Dexec.args="payment-broken"
 ```
 
 ### 3. Simulate Worker Crash
 
-1. Start a workflow with high failure rate
-2. While it's retrying, kill the worker (Ctrl+C)
-3. Restart the worker
+1. Start a workflow with `payment-flaky` scenario
+2. While it's retrying, kill the worker (Ctrl+C in Terminal 2)
+3. Restart the worker: `mvn exec:java@fraud-worker`
 4. Watch it pick up where it left off!
 
 ---

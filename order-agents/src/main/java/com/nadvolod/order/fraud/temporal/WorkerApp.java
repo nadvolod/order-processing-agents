@@ -8,8 +8,6 @@ import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
 
-import java.util.Random;
-
 public class WorkerApp {
     // 1. select a task queue name
     static final String TASK_QUEUE = "fraud-order-process";
@@ -48,38 +46,24 @@ public class WorkerApp {
             System.out.println("[INFO] OPENAI_API_KEY not set - using stub AI agents");
         }
 
-        // Create payment service with configurable fail rate and seed from environment
-        double paymentFailRate = 0.0;
-        String failRateEnv = System.getenv("PAYMENT_FAIL_RATE");
+        // Create payment service with configurable failure rate
+        // Read from environment variable, default to 0.7 (70%) if not set
+        String failRateEnv = System.getenv("PAYMENT_FAILURE_RATE");
+        double paymentFailRate = 0.7; // default
         if (failRateEnv != null && !failRateEnv.isBlank()) {
             try {
                 paymentFailRate = Double.parseDouble(failRateEnv);
                 if (paymentFailRate < 0.0 || paymentFailRate > 1.0) {
-                    System.err.println("[WARNING] PAYMENT_FAIL_RATE must be between 0.0 and 1.0, using default: 0.0");
-                    paymentFailRate = 0.0;
+                    System.err.println("[WARN] PAYMENT_FAILURE_RATE must be between 0.0 and 1.0. Using default: 0.7");
+                    paymentFailRate = 0.7;
                 }
             } catch (NumberFormatException e) {
-                System.err.println("[WARNING] Invalid PAYMENT_FAIL_RATE value, using default: 0.0");
+                System.err.println("[WARN] Invalid PAYMENT_FAILURE_RATE value. Using default: 0.7");
+                paymentFailRate = 0.7;
             }
         }
-
-        Random random;
-        String seedEnv = System.getenv("RANDOM_SEED");
-        if (seedEnv != null && !seedEnv.isBlank()) {
-            try {
-                long seed = Long.parseLong(seedEnv);
-                random = new Random(seed);
-                System.out.println("[INFO] Using random seed: " + seed);
-            } catch (NumberFormatException e) {
-                System.err.println("[WARNING] Invalid RANDOM_SEED value, using unseeded random");
-                random = new Random();
-            }
-        } else {
-            random = new Random();
-        }
-
-        System.out.println("[INFO] Payment fail rate: " + (paymentFailRate * 100) + "%");
-        FraudPaymentService paymentService = new FakeCardPaymentService(paymentFailRate, random);
+        System.out.println("[INFO] Payment failure rate: " + (paymentFailRate * 100) + "% (configurable via PAYMENT_FAILURE_RATE env var)");
+        FraudPaymentService paymentService = new FakeCardPaymentService(paymentFailRate);
 
         //6. Create activity implementations
         FraudDetectionActivityImpl fraudActivity = new FraudDetectionActivityImpl(fraudAgent);

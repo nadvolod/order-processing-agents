@@ -5,28 +5,38 @@ import com.nadvolod.order.fraud.domain.PaymentChargeResult;
 import java.util.Random;
 
 /**
- * Fake payment service that demonstrates retry scenarios.
- * - Configurable fail rate
- * - Tracks attempt count (useful for demonstrating Temporal retries later)
- * - Supports seeded randomness for deterministic testing
+ * Simulates a flaky payment service for educational purposes.
+ *
+ * This service intentionally fails with a configurable probability to demonstrate
+ * the value of retry logic. In production code, payment failures would be real
+ * (network issues, insufficient funds, etc.), but for learning Temporal workflows,
+ * we simulate them with controlled randomness.
+ *
+ * Educational scenarios:
+ * - 0.0 transientFailureRate: Always succeeds (baseline, no retries needed)
+ * - 0.7 transientFailureRate: Flaky service (demonstrates successful retries)
+ * - 1.0 transientFailureRate: Always fails (demonstrates retry exhaustion)
+ *
+ * Tracks attempt count to help visualize retry behavior.
  */
 public class FakeCardPaymentService implements FraudPaymentService {
     private static final int CHARGE_ID_BOUND = 100000;
 
-    private final double failRate;
-    private final Random random;
+    private final double transientFailureRate;
+    private final Random random = new Random();
     private int attemptCount = 0;  // For debugging/logging retry behavior
 
     /**
-     * @param failRate Probability of payment failure (0.0 to 1.0)
-     * @param random Optional seeded Random for deterministic behavior
+     * Creates a fake payment service with the specified failure rate.
+     *
+     * @param transientFailureRate Probability of temporary payment failure (0.0 to 1.0)
+     *                             0.0 = always succeeds, 1.0 = always fails
      */
-    public FakeCardPaymentService(double failRate, Random random) {
-        if (failRate < 0.0 || failRate > 1.0) {
-            throw new IllegalArgumentException("failRate must be between 0.0 and 1.0");
+    public FakeCardPaymentService(double transientFailureRate) {
+        if (transientFailureRate < 0.0 || transientFailureRate > 1.0) {
+            throw new IllegalArgumentException("transientFailureRate must be between 0.0 and 1.0");
         }
-        this.failRate = failRate;
-        this.random = random != null ? random : new Random();
+        this.transientFailureRate = transientFailureRate;
     }
 
     @Override
@@ -34,7 +44,7 @@ public class FakeCardPaymentService implements FraudPaymentService {
         attemptCount++;
         System.out.println("  [Payment] Attempt #" + attemptCount);
 
-        boolean shouldFail = random.nextDouble() < failRate;
+        boolean shouldFail = random.nextDouble() < transientFailureRate;
 
         if (shouldFail) {
             return new PaymentChargeResult(

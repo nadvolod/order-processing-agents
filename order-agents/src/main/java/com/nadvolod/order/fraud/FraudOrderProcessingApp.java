@@ -10,7 +10,6 @@ import com.nadvolod.order.fraud.service.FraudPaymentService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * CLI application for fraud detection order processing.
@@ -20,14 +19,28 @@ import java.util.Random;
  * 2. Payment Card Charging
  * 3. Confirmation Message Generation
  *
- * Usage: java FraudOrderProcessingApp <scenario> [--payment-fail-rate <rate>] [--seed <long>]
+ * Usage: java FraudOrderProcessingApp <scenario>
  *
  * Scenarios:
- *   low-risk   - Normal order, should pass fraud check
- *   high-risk  - Large quantity, may be flagged
- *   fraud-test - Intentionally suspicious, should fail fraud check
+ *   low-risk       - Normal order, should pass fraud check (payment always succeeds)
+ *   high-risk      - Large quantity, may be flagged (payment always succeeds)
+ *   fraud-test     - Intentionally suspicious, should fail fraud check (payment always succeeds)
+ *   payment-flaky  - Normal order with flaky payment (70% failure rate) - demonstrates retries!
+ *   payment-broken - Normal order with broken payment (100% failure rate) - demonstrates exhaustion
  */
 public class FraudOrderProcessingApp extends CLI {
+
+    /**
+     * Maps scenario names to payment failure rates.
+     * This enables clear, self-documenting scenario names instead of numeric parameters.
+     */
+    public static double getPaymentFailRate(String scenario) {
+        return switch (scenario) {
+            case "payment-flaky" -> 0.7;   // 70% failure - demonstrates retries
+            case "payment-broken" -> 1.0;   // 100% failure - demonstrates exhaustion
+            default -> 0.0;                 // All other scenarios succeed
+        };
+    }
 
     public static void main(String[] args) {
         // Parse CLI arguments
@@ -37,9 +50,6 @@ public class FraudOrderProcessingApp extends CLI {
             CLI.printUsage();
             System.exit(1);
         }
-
-        // Create services
-        Random random = config.seed != null ? new Random(config.seed) : new Random();
 
         // Initialize AI agents (OpenAI if available, otherwise stub)
         FraudDetectionAgent fraudAgent;
@@ -57,10 +67,9 @@ public class FraudOrderProcessingApp extends CLI {
             System.out.println("[INFO] OPENAI_API_KEY not set - using stub AI agents\n");
         }
 
-        FraudPaymentService paymentService = new FakeCardPaymentService(
-            config.paymentFailRate,
-            random
-        );
+        // Create payment service with scenario-based failure rate
+        double failRate = getPaymentFailRate(config.scenario);
+        FraudPaymentService paymentService = new FakeCardPaymentService(failRate);
 
         // Create processor
         FraudOrderProcessor processor = new FraudOrderProcessor(
@@ -75,9 +84,8 @@ public class FraudOrderProcessingApp extends CLI {
 
         System.out.println("=== Fraud Detection Workflow Demo ===");
         System.out.println("Scenario: " + config.scenario);
-        System.out.println("Payment Fail Rate: " + (config.paymentFailRate * 100) + "%");
-        if (config.seed != null) {
-            System.out.println("Random Seed: " + config.seed);
+        if (failRate > 0) {
+            System.out.println("Payment Failure Rate: " + (failRate * 100) + "%");
         }
 
         // Process order
@@ -104,7 +112,8 @@ public class FraudOrderProcessingApp extends CLI {
         String orderId;
 
         switch (scenario.toLowerCase()) {
-            case "low-risk" -> {
+            case "low-risk", "payment-flaky", "payment-broken" -> {
+                // Normal order - difference is in payment service behavior
                 orderId = "ORDER-" + System.currentTimeMillis();
                 items.add(new OrderLine("SKU-123", 2));
                 items.add(new OrderLine("SKU-789", 1));
