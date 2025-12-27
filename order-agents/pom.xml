@@ -50,6 +50,18 @@
                 <version>3.5.0</version>
                 <executions>
                     <execution>
+                        <id>fraud-worker</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.fraud.temporal.WorkerApp</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fraud-workflow</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.fraud.temporal.Starter</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>app</id>
                         <configuration>
                             <mainClass>com.nadvolod.order.OrderProcessingApp</mainClass>
@@ -65,6 +77,12 @@
                         <id>workflow</id>
                         <configuration>
                             <mainClass>com.nadvolod.order.temporal.Starter</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>fraud-app</id>
+                        <configuration>
+                            <mainClass>com.nadvolod.order.fraud.FraudOrderProcessingApp</mainClass>
                         </configuration>
                     </execution>
                 </executions>
