@@ -14,14 +14,28 @@ import java.time.Duration;
 public class FraudOrderWorkflowImpl implements FraudOrderWorkflow {
     private static final double PRICE_PER_ITEM = 10.0;
     //1. Create activity "stubs"
+    // Fraud Detection (AI-based, may be slow)
+    // Fail → wait 1s → retry → fail → wait 2s → retry → fail → done.
     private final FraudDetectionActivity fraudDetectionActivity = Workflow.newActivityStub(FraudDetectionActivity.class,
             ActivityOptions.newBuilder()
-                    .setStartToCloseTimeout(Duration.ofSeconds(5))
+                    .setStartToCloseTimeout(Duration.ofSeconds(30))
+                    .setRetryOptions(RetryOptions.newBuilder()
+                            .setMaximumAttempts(3)  //Total tries (1 original + 2 retries)
+                            .setInitialInterval(Duration.ofSeconds(1))  //Wait before first retry
+                            .setMaximumInterval(Duration.ofSeconds(10)) //Cap on wait time between retries
+                            .setBackoffCoefficient(2.0) //Multiplier for exponential backoff
+                            .build())
                     .build()
     );
     private final ConfirmationMessageActivity confirmationMessageActivity = Workflow.newActivityStub(ConfirmationMessageActivity.class,
             ActivityOptions.newBuilder()
-                    .setStartToCloseTimeout(Duration.ofSeconds(5))
+                    .setStartToCloseTimeout(Duration.ofSeconds(30))
+                    .setRetryOptions(RetryOptions.newBuilder()
+                            .setMaximumAttempts(3)
+                            .setInitialInterval(Duration.ofSeconds(1))
+                            .setMaximumInterval(Duration.ofSeconds(10))
+                            .setBackoffCoefficient(2.0)
+                            .build())
                     .build());
     private final PaymentChargeActivity paymentChargeActivity = Workflow.newActivityStub(PaymentChargeActivity.class,
             ActivityOptions.newBuilder()
