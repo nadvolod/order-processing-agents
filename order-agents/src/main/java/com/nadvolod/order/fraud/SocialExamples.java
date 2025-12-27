@@ -16,12 +16,14 @@ public class SocialExamples {
 
         while (attempt < maxAttempts) {
             try {
+                // commented for example purposes
                 // return aiAgent.explain(req, resp);
             } catch (Exception e) {
                 attempt++;
                 if (attempt >= maxAttempts) {
                     throw new RuntimeException("Failed after " + maxAttempts + " attempts", e);
                 }
+                // commented for example purposes
                 // logFailure(e, attempt);
 
                 try {

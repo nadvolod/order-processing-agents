@@ -5,7 +5,7 @@
 This package implements a simplified, AI-powered order processing workflow focused on fraud detection and payment processing. It's designed as a learning tool to demonstrate the value of Temporal workflow orchestration.
 
 **Workflow Steps:**
-```
+```text
 OrderRequest → AI Fraud Detection → Charge Payment Card → Generate Confirmation Message → Result
 ```
 
@@ -65,7 +65,7 @@ OPENAI_API_KEY= mvn exec:java@fraud-app -Dexec.args="low-risk"
 
 ### Package Structure
 
-```
+```text
 com.nadvolod.order.fraud/
 ├── domain/              # Data models
 │   ├── FraudDetectionResult
@@ -153,7 +153,7 @@ This makes Temporal's benefits obvious when you add it later!
 
 ### Successful Order
 
-```
+```text
 === Processing Fraud Detection Order: ORDER-1766181159899 ===
 
 STEP 1: AI Fraud Detection
@@ -182,7 +182,7 @@ RESULT: APPROVED
 
 ### Fraud Rejected
 
-```
+```text
 STEP 1: AI Fraud Detection
   Risk Score: 0.95
   Risk Level: HIGH
@@ -195,7 +195,7 @@ Order rejected due to fraud detection.
 
 ### Payment Failure (No Retries!)
 
-```
+```text
 STEP 2: Charge Payment Card
   Amount: $30.00
   [Payment] Attempt #1
