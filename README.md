@@ -8,10 +8,9 @@ This repository showcases the evolution of an order processing system:
 
 **Current State**: A naive, synchronous order processing workflow without Temporal, HTTP APIs, or retries. This is intentional to highlight problems that Temporal will later solve.
 
-**Future Plans**:
-1. Add AI agents for decision support and customer communication
-2. Migrate to Temporal workflows for durability, retries, and observability
-3. Optionally add HTTP API layer
+**v2 With AI Fraud Detection**
+
+[This is a more realistic implementation of using AI w/ Temporal.](https://github.com/nadvolod/order-processing-agents/tree/main/order-agents/src/main/java/com/nadvolod/order/fraud/README.md)
 
 ## Repository Structure
 
